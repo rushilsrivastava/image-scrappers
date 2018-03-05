@@ -11,7 +11,11 @@ from lxml.html import fromstring
 import os
 import sys
 from fake_useragent import UserAgent
-import urllib.parse as urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+     from urlparse import urlparse
+
 
 '''
 Commandline based Google Image scraping. Gets up to 800 images.
