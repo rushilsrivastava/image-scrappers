@@ -153,7 +153,7 @@ def download_image(link, image_data):
                 with open(imagep,"rb") as f:
                     contents = f.read()
                     shahash = hashlib.sha256(contents).hexdigest()
-				print("Debug:  Opened file")
+                print("Debug:  Opened file")
                 os.rename(imagep,imagep.replace("Scrapper_{}".format(str(download_image.delta)),shahash))
                 os.rename(jsonp,jsonp.replace("Scrapper_{}".format(str(download_image.delta)),shahash))
                 print("[%] Generated sha256 hash: {}".format(str(shahash)))
