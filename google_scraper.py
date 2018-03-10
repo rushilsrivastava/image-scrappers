@@ -74,7 +74,7 @@ def search(url):
 
 
 def error(link):
-    print("==> Skipped. Can't download or no metadata.\n")
+    print("==> Skipped. Can't download or no metadata.")
     file = Path("dataset/logs/google/errors.log".format(query))
     if file.is_file():
         with open("dataset/logs/google/errors.log".format(query), "a") as myfile:
@@ -102,14 +102,14 @@ def download_image(link, image_data):
             type = "jpg"
 
         # Download the image
-        print("==> Downloading Image #{} from {}".format(
+        print("\n==> Downloading Image #{} from {}".format(
             download_image.delta, link))
         try:
             if sys.version_info[0] > 2:
                 urllib.request.urlretrieve(link, "dataset/google/{}/".format(query) + "Scrapper_{}.{}".format(str(download_image.delta), type))
             else:
                 urllib.urlopen(link, "dataset/google/{}/".format(query) + "Scrapper_{}.{}".format(str(download_image.delta), type))
-            print("[%] Downloaded File")
+            print("==> Downloaded image")
             with open("dataset/google/{}/Scrapper_{}.json".format(query, str(download_image.delta)), "w") as outfile:
                 json.dump(image_data, outfile, indent=4)
         except Exception as e:
