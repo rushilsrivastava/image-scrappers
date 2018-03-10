@@ -56,7 +56,7 @@ def error(msg, flag):
 def nonfatal_error(message):
     curdir = current_directory()
     file = Path(curdir + "dataset" + os.sep + "google" + os.sep + "logs" + os.sep + "errors.log")
-	filepath = (curdir + "dataset" + os.sep + "google" + os.sep + "logs" + os.sep + "errors.log")
+    filepath = (curdir + "dataset" + os.sep + "google" + os.sep + "logs" + os.sep + "errors.log")
     if file.is_file():
         with open(filepath, "a") as myfile:
             myfile.write(message + "\n")
