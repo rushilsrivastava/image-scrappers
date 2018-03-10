@@ -1,7 +1,9 @@
 # image-scrapers
-Image Scrappers built for scrapping Bing and Google images + metadata. Bing works with Python 3 and Google works with Python 2 and 3.
+Image Scrapers built for scraping Bing and Google images + metadata. Bing works with Python 3 and Google works with Python 2 and 3.
 
 Both the scrapers will save to their own folders under a global folder called `dataset`.
+
+The method used here can grab large numbers of images by automatically generating 'Show more' click events!  No more 100 limit!
 
 ## How to Use
 
@@ -17,7 +19,16 @@ Ensure you have the [appropriate version](https://sites.google.com/a/chromium.or
 
 Then:
 
-    python3.5 google_scraper.py "https://www.google.com/search?q=cats&source=lnms&tbm=isch&sa=X&ved=0ahUKEwiwoLXK1qLVAhWqwFQKHYMwBs8Q_AUICigB"
+    python3.5 google_scraper.py --url "https://www.google.com/search?q=cats&source=lnms&tbm=isch&sa=X&ved=0ahUKEwiwoLXK1qLVAhWqwFQKHYMwBs8Q_AUICigB"
+
+Other command line options:
+
+    --hash {yes|no} - default:  no (if unspecified)
+        choose to rename each file based on its sha256 hash equivelent.  This is a proven way to detect duplicate downloads
+        which may have different filenames.
+    --unique {yes|no} - default:  yes (if unspecified)
+        choose to place the search run into its own unique folder.  if set to "no", all subsequent runs of the tool will place
+        the results in the dataset/google folder, and not into their own unique folders based on search terminology.
 
 ### Bing:
 
@@ -35,4 +46,7 @@ Then:
 ## FAQs
 
 *Why do I ask for the url parameter?*
- - I am using the URL parameter so the user can specify tag searches as well (the rectangular suggestions on the top for google)
+ - I am using the URL parameter so the user can specify tag searches as well (the rectangular suggestions on the top for Google)
+
+*Is this legal?*
+ - I do not condone or advise copyright infringement or plagiarism.  It is your responsibility to use this tool appropriately.
