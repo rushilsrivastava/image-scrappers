@@ -29,16 +29,16 @@ def search(url):
     browser = webdriver.Chrome()
     browser.set_window_size(1024, 768)
     print("\n===============================================\n")
-    print("[%] Successfully launched Chrome Browser")
+    print("==> Chrome Driver Launched")
 
     # Open the link
     browser.get(url)
     time.sleep(1)
-    print("[%] Successfully opened link.")
+    print("==> Link Loaded")
 
     element = browser.find_element_by_tag_name("body")
 
-    print("[%] Scrolling down.")
+    print("==> Scrolling page...")
     # Scroll down
     for i in range(30):
         element.send_keys(Keys.PAGE_DOWN)
@@ -46,7 +46,7 @@ def search(url):
 
     try:
         browser.find_element_by_id("smb").click()
-        print("[%] Successfully clicked 'Show More Button'.")
+        print("==> Generated 'Show More' event")
         for i in range(50):
             element.send_keys(Keys.PAGE_DOWN)
             time.sleep(0.3)  # bot id protection
@@ -55,22 +55,26 @@ def search(url):
             element.send_keys(Keys.PAGE_DOWN)
             time.sleep(0.3)  # bot id protection
 
-    print("[%] Reached end of Page.")
+    print("==> Reached end of page")
 
     time.sleep(1)
     # Get page source and close the browser
+    print("==> Saving page source...")
     source = browser.page_source
-    f = open('dataset/logs/google/source.html', 'w+')
-    f.write(source)
+    with open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
+        f.write(source)
 
+    print("==> Page source saved")
+	
     browser.close()
-    print("[%] Closed Browser.")
+    print("==> Closed browser window")
+    print("\n===============================================\n")
 
     return source
 
 
 def error(link):
-    print("[!] Skipping {}. Can't download or no metadata.\n".format(link))
+    print("==> Skipped. Can't download or no metadata.\n")
     file = Path("dataset/logs/google/errors.log".format(query))
     if file.is_file():
         with open("dataset/logs/google/errors.log".format(query), "a") as myfile:
@@ -98,7 +102,7 @@ def download_image(link, image_data):
             type = "jpg"
 
         # Download the image
-        print("[%] Downloading Image #{} from {}".format(
+        print("==> Downloading Image #{} from {}".format(
             download_image.delta, link))
         try:
             if sys.version_info[0] > 2:
@@ -110,11 +114,13 @@ def download_image(link, image_data):
                 json.dump(image_data, outfile, indent=4)
         except Exception as e:
             download_image.delta -= 1
-            print("[!] Issue Downloading: {}\n[!] Error: {}".format(link, e))
+            download_image.errors += 1
+            print("==> Error: {}".format(e))
             error(link)
     except Exception as e:
         download_image.delta -= 1
-        print("[!] Issue getting: {}\n[!] Error:: {}".format(link, e))
+        download_image.errors += 1
+        print("==> Error: {}".format(e))
         error(link)
 
 
@@ -155,38 +161,41 @@ if __name__ == "__main__":
     links = [json.loads(i.text)["ou"]
              for i in soup.find_all("div", class_="rg_meta")]
     print("[%] Indexed {} Images.".format(len(links)))
+
     print("\n===============================================\n")
-    print("[%] Getting Image Information.")
+    print("[%] Getting image metadata\n")
     images = {}
     linkcounter = 0
+    errorcounter = 0
     for a in soup.find_all("div", class_="rg_meta"):
-        print("\n------------------------------------------")
         rg_meta = json.loads(a.text)
         if 'st' in rg_meta:
             title = rg_meta['st']
         else:
             title = ""
         link = rg_meta["ou"]
-        print("\n[%] Getting info on: {}".format(link))
+        print("==> Getting info on: {}".format(link))
         try:
             image_data = "google", query, rg_meta["pt"], rg_meta["s"], title, link, rg_meta["ru"]
             images[link] = image_data
         except Exception as e:
             images[link] = image_data
-            print("[!] Issue getting data: {}\n[!] Error: {}".format(rg_meta, e))
+            print("==> Issue getting data: {}\n[!] Error: {}".format(rg_meta, e))
+            errorcounter += 1
 
+        print("==> Information received for: {}".format(link))
         linkcounter += 1
 
     # Open i processes to download
-    print("\n------------------------------------------\n")
+    print ("\n Done fetching metadata.  {} succeeded | {} failed".format(linkcounter,errorcounter))
     print("\n===============================================\n")
     download_image.delta = 0
+    download_image.errors = 0
     for i, (link) in enumerate(links):
-        print("\n------------------------------------------\n")
         try:
             download_image(link, images[link])
         except Exception as e:
             error(link)
 
-    print("\n\n[%] Done. Downloaded {} images.".format(download_image.delta))
+    print("\n\n[%] Done. Downloaded images.   {} succeeded | {} failed".format(download_image.delta,download_image.errors))
     print("\n===============================================\n")
