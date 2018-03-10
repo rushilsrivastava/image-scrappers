@@ -18,10 +18,9 @@ before_script:
   - sudo mv -f ~/chromedriver /usr/local/bin/
   - sudo chmod a+x /usr/local/bin/chromedriver
   - sh -e /etc/init.d/xvfb start
-  - sudo apt-get install openssl
   - sleep 3
 
-install: "pip install -r requirements.txt"
+install: "sudo apt-get install openssl && pip install -r requirements.txt"
 
 script:
   - python google_scraper.py --url "https://www.google.com/search?q=cats&source=lnms&tbm=isch&sa=X&ved=0ahUKEwiwoLXK1qLVAhWqwFQKHYMwBs8Q_AUICigB"
