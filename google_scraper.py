@@ -10,6 +10,8 @@ from pathlib import Path
 from lxml.html import fromstring
 import os
 import sys
+import config
+import hashlib
 from fake_useragent import UserAgent
 if sys.version_info[0] > 2:
     import urllib.parse as urlparse
@@ -21,6 +23,7 @@ else:
 '''
 Commandline based Google Image scraping. Gets up to 800 images.
 Author: Rushil Srivastava (rushu0922@gmail.com)
+Improvements by:  LupineDream (loopyd at lupinedream dot com)
 '''
 
 
@@ -61,8 +64,14 @@ def search(url):
     # Get page source and close the browser
     print("==> Saving page source...")
     source = browser.page_source
-    with open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
-        f.write(source)
+	
+	# fix for travis cli build error with python 2.7
+    if sys.version_info[0] > 2:
+        with open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
+            f.write(source)
+    else:
+        with open('dataset/logs/google/source.html', 'w+', errors='replace') as f:
+            f.write(source)
 
     print("==> Page source saved")
 	
@@ -90,7 +99,7 @@ def download_image(link, image_data):
     ua = UserAgent()
     headers = {"User-Agent": ua.random}
 
-    # Get the image link
+    # ----- BEGIN main download_image try/catch
     try:
         # Get the file name and type
         file_name = link.split("/")[-1]
@@ -105,13 +114,34 @@ def download_image(link, image_data):
         print("\n==> Downloading Image #{} from {}".format(
             download_image.delta, link))
         try:
-            if sys.version_info[0] > 2:
-                urllib.request.urlretrieve(link, "dataset/google/{}/".format(query) + "Scrapper_{}.{}".format(str(download_image.delta), type))
+            # set the working paths depending on the 'unique' argument.
+            if config.unique == True:
+                imagep = ("dataset/google/{}/".format(query) + "Scrapper_{}.{}".format(str(download_image.delta), type))
+                jsonp = ("dataset/google/{}/Scrapper_{}.json".format(query, str(download_image.delta)))
             else:
-                urllib.urlopen(link, "dataset/google/{}/".format(query) + "Scrapper_{}.{}".format(str(download_image.delta), type))
+                imagep = ("dataset/google/" + "Scrapper_{}.{}".format(str(download_image.delta), type))
+                jsonp = ("dataset/google/Scrapper_{}.json".format(str(download_image.delta)))
+            
+			# open the URL and retrieve the image
+            if sys.version_info[0] > 2:
+                urllib.request.urlretrieve(link, imagep)
+            else:
+                urllib.urlopen(link, imagep)
             print("==> Downloaded image")
-            with open("dataset/google/{}/Scrapper_{}.json".format(query, str(download_image.delta)), "w") as outfile:
+            
+            # dump the json metadata from the URL to the json file
+            with open(jsonp, "w") as outfile:
                 json.dump(image_data, outfile, indent=4)
+            
+            # if the 'hash' argument has been specified, perform the action to rename the files
+            if config.hash == True:
+                with open(imagep,"rb") as f:
+                    contents = f.read()
+                    shahash = hashlib.sha256(contents).hexdigest()
+                os.rename(imagep,imagep.replace(("Scrapper_{}".format(str(download_image.delta))),shahash))
+                os.rename(jsonp,jsonp.replace(("Scrapper_{}".format(str(download_image.delta))),shahash))
+                print("==> Generated sha256 hash: {}".format(str(shahash)))
+				
         except Exception as e:
             download_image.delta -= 1
             download_image.errors += 1
@@ -122,25 +152,45 @@ def download_image(link, image_data):
         download_image.errors += 1
         print("==> Error: {}".format(e))
         error(link)
+	# ----- END main download_image try/catch
 
 
 if __name__ == "__main__":
     # parse command line options
     parser = argparse.ArgumentParser()
-    parser.add_argument("url", help="Give the url that I should parse.")
+    parser.add_argument("--url", help="Give the url that the download tool should parse.")
+    parser.add_argument("--hash", help="yes/no - Rename the files and json metadata to their sha256 equivalent.  Useful for mutated searches potentially involving duplicate downloads.", nargs="?", default="no")
+    parser.add_argument("--unique", help="yes/no - Place all of the resulting downloads in their own unique sub-folder", nargs="?", default="no")
     args = parser.parse_args()
 
     # set local vars from user input
     query = urlparse.parse_qs(urlparse.urlparse(args.url).query)['q'][0]
     url = args.url
 
-    # check directory and create if necessary
+    # if the dataset root doesn't exist, create it.
     if not os.path.isdir("dataset/"):
         os.makedirs("dataset/")
-    if not os.path.isdir("dataset/google/{}".format(query)):
-        os.makedirs("dataset/google/{}".format(query))
+    # if the log directory doesn't exist, create it.
     if not os.path.isdir("dataset/logs/google/".format(query)):
         os.makedirs("dataset/logs/google/".format(query))
+
+    # set global vars for hash from user input
+    if (args.hash).lower() == "yes":
+        config.hash = True
+    else:
+        config.hash = False
+
+    # set global vars and construct tree if nonexistent from user input.
+    if (args.unique).lower() == "yes":
+        config.unique = True
+        config.imagepath = ("dataset/google/{}".format(query))
+        if not os.path.isdir("dataset/google/{}".format(query)):
+            os.makedirs("dataset/google/{}".format(query))
+    else:
+        config.unique = False
+        config.imagepath = ("dataset/google/")
+        if not os.path.isdir("dataset/google/"):
+            os.makedirs("dataset/google/")
 
     source = search(url)
 
@@ -187,7 +237,7 @@ if __name__ == "__main__":
         linkcounter += 1
 
     # Open i processes to download
-    print ("\n Done fetching metadata.  {} succeeded | {} failed".format(linkcounter,errorcounter))
+    print ("\n Done fetching links from page.  {} succeeded | {} failed".format(linkcounter,errorcounter))
     print("\n===============================================\n")
     download_image.delta = 0
     download_image.errors = 0

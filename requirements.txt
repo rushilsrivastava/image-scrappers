@@ -5,3 +5,4 @@ pathlib
 lxml
 bs4
 fake_useragent
+hashlib
