@@ -32,16 +32,16 @@ def search(url):
     browser = webdriver.Chrome()
     browser.set_window_size(1024, 768)
     print("\n===============================================\n")
-    print("==> Chrome Driver Launched")
+    print("[%] Chromedriver Launched")
 
     # Open the link
     browser.get(url)
     time.sleep(1)
-    print("==> Link Loaded")
+    print("[%] Loaded Link")
 
     element = browser.find_element_by_tag_name("body")
 
-    print("==> Scrolling page...")
+    print("[%] Scrolling Page")
     # Scroll down
     for i in range(30):
         element.send_keys(Keys.PAGE_DOWN)
@@ -49,7 +49,7 @@ def search(url):
 
     try:
         browser.find_element_by_id("smb").click()
-        print("==> Generated 'Show More' event")
+        print("[%] Loaded Show More Element")
         for i in range(50):
             element.send_keys(Keys.PAGE_DOWN)
             time.sleep(0.3)  # bot id protection
@@ -58,11 +58,10 @@ def search(url):
             element.send_keys(Keys.PAGE_DOWN)
             time.sleep(0.3)  # bot id protection
 
-    print("==> Reached end of page")
+    print("[%] Reached the end of the Page")
 
     time.sleep(1)
     # Get page source and close the browser
-    print("==> Saving page source...")
     source = browser.page_source
 	
 	# fix for travis cli build error with python 2.7
@@ -72,18 +71,16 @@ def search(url):
     else:
         with open('dataset/logs/google/source.html', 'w+', errors='replace') as f:
             f.write(source)
-
-    print("==> Page source saved")
 	
     browser.close()
-    print("==> Closed browser window")
+    print("[%] Closed chromedriver")
     print("\n===============================================\n")
 
     return source
 
 
 def error(link):
-    print("==> Skipped. Can't download or no metadata.")
+    print("[%] Skipped. Can't download or no metadata.")
     file = Path("dataset/logs/google/errors.log".format(query))
     if file.is_file():
         with open("dataset/logs/google/errors.log".format(query), "a") as myfile:
@@ -127,7 +124,7 @@ def download_image(link, image_data):
                 urllib.request.urlretrieve(link, imagep)
             else:
                 urllib.urlopen(link, imagep)
-            print("==> Downloaded image")
+            print("[%] Downloaded image")
             
             # dump the json metadata from the URL to the json file
             with open(jsonp, "w") as outfile:
@@ -140,17 +137,17 @@ def download_image(link, image_data):
                     shahash = hashlib.sha256(contents).hexdigest()
                 os.rename(imagep,imagep.replace(("Scrapper_{}".format(str(download_image.delta))),shahash))
                 os.rename(jsonp,jsonp.replace(("Scrapper_{}".format(str(download_image.delta))),shahash))
-                print("==> Generated sha256 hash: {}".format(str(shahash)))
+                print("[%] Generated sha256 hash: {}".format(str(shahash)))
 				
         except Exception as e:
             download_image.delta -= 1
             download_image.errors += 1
-            print("==> Error: {}".format(e))
+            print("[!] Issue Downloading: {}\n[!] Error: {}".format(link, e))
             error(link)
     except Exception as e:
         download_image.delta -= 1
         download_image.errors += 1
-        print("==> Error: {}".format(e))
+        print("[!] Issue Downloading: {}\n[!] Error: {}".format(link, e))
         error(link)
 	# ----- END main download_image try/catch
 
@@ -224,7 +221,7 @@ if __name__ == "__main__":
         else:
             title = ""
         link = rg_meta["ou"]
-        print("==> Getting info on: {}".format(link))
+        print("[%] Getting info on: {}".format(link))
         try:
             image_data = "google", query, rg_meta["pt"], rg_meta["s"], title, link, rg_meta["ru"]
             images[link] = image_data
@@ -233,7 +230,7 @@ if __name__ == "__main__":
             print("==> Issue getting data: {}\n[!] Error: {}".format(rg_meta, e))
             errorcounter += 1
 
-        print("==> Information received for: {}".format(link))
+        print("[%] Downloaded information for: {}".format(link))
         linkcounter += 1
 
     # Open i processes to download
