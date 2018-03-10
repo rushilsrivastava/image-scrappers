@@ -26,7 +26,69 @@ Author: Rushil Srivastava (rushu0922@gmail.com)
 Improvements by:  LupineDream (loopyd at lupinedream dot com)
 '''
 
+# custom switch block class
+class switch(object):
+    value = None
+    def __new__(class_, value):
+        class_.value = value
+        return True
 
+def case(*args):
+    return any((arg == switch.value for arg in args))
+
+# ----- BEGIN Error handler
+
+# error hook which handles both fatal and non-fatal errors
+def error(msg, flag):
+
+    while switch(flag):
+        if case(0):
+            nonfatal_error(msg)
+            break
+        if case(1):
+            fatal_error(msg)
+            break
+        break
+    return
+
+
+# nonfatal error hook with logger
+def nonfatal_error(message):
+    curdir = current_directory()
+    file = Path(curdir + "dataset" + os.sep + "google" + os.sep + "logs" + os.sep + "errors.log")
+    if file.is_file():
+        with open(file, "a") as myfile:
+            myfile.write(message + "\n")
+    else:
+        with open(file, "w+") as myfile:
+            myfile.write(message + "\n")
+    print("[error] {}".format(message))
+    return
+
+# fatal error hook, you should sys.exit() after one of these.
+def fatal_error(message):
+    print("[fatal] {}".format(message))
+    return
+
+# ---- END error handler
+
+# FUNCTION which returns the current directory the script was run from
+def current_directory():
+    # set the current directory as a platform-ready relative syntax (fix for python 2.7 and linux/windows)
+    if sys.version_info[0] > 2:
+        if os.name == 'nt':
+            curdir = ""
+        else:
+            curdir = "." + os.sep
+    else:
+        if os.name == 'nt':
+            curdir = os.path.dirname(__file__) + os.sep
+        else:
+            curdir = "." + os.path.dirname(__file__) + os.sep
+    
+    return curdir
+
+# SUB which performs the google search via chromedriver
 def search(url):
     # Create a browser and resize for exact pinpoints
     browser = webdriver.Chrome()
@@ -63,57 +125,33 @@ def search(url):
     time.sleep(1)
     # Get page source and close the browser
     source = browser.page_source
-	
-	# fix for travis cli build error with python 2.7
+    
+    # fix for travis cli build error with python 2.7
+    curdir = current_directory()
     if sys.version_info[0] > 2:
-        with open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
+        with open((curdir + "dataset" + os.sep + "google" + os.sep + "logs" + os.sep + "source.html"), 'w+', encoding='utf-8', errors='replace') as f:
             f.write(source)
     else:
-        with open('dataset/logs/google/source.html', 'w') as f:
+        with open((curdir + "dataset" + os.sep + "google" + os.sep + "logs" + os.sep + "source.html"), 'w') as f:
             f.write(source)
-	
+    
     browser.close()
     print("[%] Closed chromedriver")
     print("\n===============================================\n")
 
     return source
 
-
-def error(link):
-    print("[%] Skipped. Can't download or no metadata.")
-    file = Path("dataset/logs/google/errors.log".format(query))
-    if file.is_file():
-        with open("dataset/logs/google/errors.log".format(query), "a") as myfile:
-            myfile.write(link + "\n")
-    else:
-        with open("dataset/logs/google/errors.log".format(query), "w+") as myfile:
-            myfile.write(link + "\n")
-
-def current_directory():
-    # set the current directory as a platform-ready relative syntax (fix for python 2.7 and linux/windows)
-    if sys.version_info[0] > 2:
-        if os.name == 'nt':
-	        curdir = ""
-        else:
-            curdir = "." + os.sep
-    else:
-        if os.name == 'nt':
-	        curdir = os.path.dirname(__file__) + os.sep
-        else:
-            curdir = "." + os.path.dirname(__file__) + os.sep
-    
-    return curdir
-
+# SUB which downloads an image at the link specified
 def download_image(link, image_data):
     download_image.delta += 1
     # Use a random user agent header for bot id
     ua = UserAgent()
     headers = {"User-Agent": ua.random}
-	
-    # set the current directory (fix for python 2.7)
-    curdir = current_directory()
     
-    # ----- BEGIN main download_image try/catch
+    # set the current directory
+    curdir = config.imagepath
+    
+    # ----- BEGIN main download_image try/catch exceptions
     try:
         # Get the file name and type
         file_name = link.split("/")[-1]
@@ -123,21 +161,17 @@ def download_image(link, image_data):
             type = "jpeg"
         if type.lower() not in ["jpeg", "jfif", "exif", "tiff", "gif", "bmp", "png", "webp", "jpg"]:
             type = "jpg"
-
-	    # set the working paths depending on the 'unique' argument and the operating system (fix for python 2.7 and linux/windows)
-        if config.unique == True:
-            imagep = (curdir + "dataset" + os.sep + "google" + os.sep + "{}".format(query) + os.sep + "Scrapper_{}.{}".format(str(download_image.delta), type))
-            jsonp = (curdir + "dataset" + os.sep + "google" + os.sep + "{}".formatr(query) + os.sep + "Scrapper_{}.json".format(str(download_image.delta)))
-        else:
-            imagep = (curdir + "dataset" + os.sep + "google" + os.sep + "Scrapper_{}.{}".format(str(download_image.delta), type))
-            jsonp = (curdir + "dataset" + os.sep + "google" + os.sep + "Scrapper_{}.json".format(str(download_image.delta)))
-
+        
+        # set the working paths
+        imagep = (curdir + "Scrapper_{}.{}".format(str(download_image.delta), type))
+        jsonp = (curdir + "Scrapper_{}.json".format(str(download_image.delta)))
+        
         # Download the image
-        print("\n==> Downloading Image #{} from {}".format(
-            download_image.delta, link))
+        print("\n[%] Downloading Image #{} from {}".format(download_image.delta, link))
+        
         try:
             
-			# open the URL and retrieve the image
+            # open the URL and retrieve the image
             if sys.version_info[0] > 2:
                 urllib.request.urlretrieve(link, imagep)
             else:
@@ -153,23 +187,64 @@ def download_image(link, image_data):
                 with open(imagep,"rb") as f:
                     contents = f.read()
                     shahash = hashlib.sha256(contents).hexdigest()
-                print("Debug:  Opened file")
                 os.rename(imagep,imagep.replace("Scrapper_{}".format(str(download_image.delta)),shahash))
                 os.rename(jsonp,jsonp.replace("Scrapper_{}".format(str(download_image.delta)),shahash))
                 print("[%] Generated sha256 hash: {}".format(str(shahash)))
-				
+                
         except Exception as e:
             download_image.delta -= 1
             download_image.errors += 1
-            print("[!] Issue Downloading: {}\n[!] Error: {}".format(link, e))
-            error(link)
+            error(("[!] Issue Downloading: {} | Error: {}".format(link, e)), 0)
     except Exception as e:
         download_image.delta -= 1
         download_image.errors += 1
-        print("[!] Issue Downloading: {}\n[!] Error: {}".format(link, e))
-        error(link)
-	# ----- END main download_image try/catch
+        error(("[!] Issue Downloading: {} | Error: {}".format(link, e)), 0)
 
+    # ----- END main download_image try/catch
+    
+def prep_dirs(qu):
+    try:
+        # if the dataset required directories don't exist, create them.
+        curdir = current_directory()
+        if not os.path.isdir((curdir + "dataset")):
+            os.makedirs("dataset")
+        if not os.path.isdir(curdir + "dataset" + os.sep + "google"):
+            os.makedirs(curdir + "dataset" + os.sep + "google")
+        if not os.path.isdir(curdir + "dataset" + os.sep + "google" + os.sep + "logs"):
+            os.makedirs(curdir + "dataset" + os.sep + "google" + os.sep + "logs")
+
+        # set global vars for hash from user input
+        if (args.hash).lower() == "yes":
+            config.hash = True
+        else:
+            config.hash = False
+
+        # set global vars and construct tree if nonexistent from user input.
+        if (args.unique).lower() == "yes":
+            config.unique = True
+            config.imagepath = (curdir + "dataset" + os.sep + "google" + os.sep + ("{}".format(qu)))
+        else:
+            config.unique = False
+            config.imagepath = (curdir + "dataset" + os.sep + "google")
+        if not os.path.isdir(config.imagepath):
+            os.makedirs(config.imagepath)
+        config.imagepath += os.sep
+        
+        try:
+            os.remove("dataset/logs/google/errors.log")
+        except OSError:
+            pass
+
+    except IOError:
+        error("Directory creation failed", 1)
+        sys.exit()
+    
+    except OSError:
+        error("Directory creation failed", 1)
+        sys.exit()
+    
+    
+    return
 
 if __name__ == "__main__":
     # parse command line options
@@ -183,31 +258,10 @@ if __name__ == "__main__":
     query = urlparse.parse_qs(urlparse.urlparse(args.url).query)['q'][0]
     url = args.url
 
-    # if the dataset root doesn't exist, create it.
-    if not os.path.isdir("dataset/"):
-        os.makedirs("dataset/")
-    # if the log directory doesn't exist, create it.
-    if not os.path.isdir("dataset/logs/google/".format(query)):
-        os.makedirs("dataset/logs/google/".format(query))
-
-    # set global vars for hash from user input
-    if (args.hash).lower() == "yes":
-        config.hash = True
-    else:
-        config.hash = False
-
-    # set global vars and construct tree if nonexistent from user input.
-    if (args.unique).lower() == "yes":
-        config.unique = True
-        config.imagepath = ("dataset/google/{}".format(query))
-        if not os.path.isdir("dataset/google/{}".format(query)):
-            os.makedirs("dataset/google/{}".format(query))
-    else:
-        config.unique = False
-        config.imagepath = ("dataset/google/")
-        if not os.path.isdir("dataset/google/"):
-            os.makedirs("dataset/google/")
-
+    # prep directories
+    prep_dirs(query)
+    
+    # search for the url
     source = search(url)
 
     # set stack limit
@@ -217,11 +271,6 @@ if __name__ == "__main__":
     soup = BeautifulSoup(str(source), "html.parser")
     ua = UserAgent()
     headers = {"User-Agent": ua.random}
-
-    try:
-        os.remove("dataset/logs/google/errors.log")
-    except OSError:
-        pass
 
     # Get the links and image data
     links = [json.loads(i.text)["ou"]
@@ -261,7 +310,7 @@ if __name__ == "__main__":
         try:
             download_image(link, images[link])
         except Exception as e:
-            error(link)
+            error(("[!] Issue Downloading: {} | Error: {}".format(link, e)), 0)
 
     print("\n\n[%] Done. Downloaded images.   {} succeeded | {} failed".format(download_image.delta,download_image.errors))
     print("\n===============================================\n")
