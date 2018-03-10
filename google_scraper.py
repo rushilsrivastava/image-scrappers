@@ -127,7 +127,7 @@ def download_image(link, image_data):
 	    # set the working paths depending on the 'unique' argument and the operating system (fix for python 2.7 and linux/windows)
         if config.unique == True:
             imagep = (curdir + "dataset" + os.sep + "google" + os.sep + "{}".format(query) + os.sep + "Scrapper_{}.{}".format(str(download_image.delta), type))
-            jsonp = (curdir + "dataset" + os.sep + "/google" + os.sep + "{}".formatr(query) + os.sep + "Scrapper_{}.json".format(str(download_image.delta)))
+            jsonp = (curdir + "dataset" + os.sep + "google" + os.sep + "{}".formatr(query) + os.sep + "Scrapper_{}.json".format(str(download_image.delta)))
         else:
             imagep = (curdir + "dataset" + os.sep + "google" + os.sep + "Scrapper_{}.{}".format(str(download_image.delta), type))
             jsonp = (curdir + "dataset" + os.sep + "google" + os.sep + "Scrapper_{}.json".format(str(download_image.delta)))
@@ -153,8 +153,9 @@ def download_image(link, image_data):
                 with open(imagep,"rb") as f:
                     contents = f.read()
                     shahash = hashlib.sha256(contents).hexdigest()
-                os.rename(imagep,imagep.replace(("Scrapper_{}".format(str(download_image.delta))),shahash))
-                os.rename(jsonp,jsonp.replace(("Scrapper_{}".format(str(download_image.delta))),shahash))
+				print("Debug:  Opened file")
+                os.rename(imagep,imagep.replace("Scrapper_{}".format(str(download_image.delta)),shahash))
+                os.rename(jsonp,jsonp.replace("Scrapper_{}".format(str(download_image.delta)),shahash))
                 print("[%] Generated sha256 hash: {}".format(str(shahash)))
 				
         except Exception as e:
