@@ -89,6 +89,20 @@ def error(link):
         with open("dataset/logs/google/errors.log".format(query), "w+") as myfile:
             myfile.write(link + "\n")
 
+def current_directory():
+    # set the current directory as a platform-ready relative syntax (fix for python 2.7 and linux/windows)
+    if sys.version_info[0] > 2:
+        if os.name == 'nt':
+	        curdir = ""
+        else:
+            curdir = "." + os.sep
+    else:
+        if os.name == 'nt':
+	        curdir = os.path.dirname(__file__) + os.sep
+        else:
+            curdir = "." + os.path.dirname(__file__) + os.sep
+    
+    return curdir
 
 def download_image(link, image_data):
     download_image.delta += 1
@@ -97,10 +111,7 @@ def download_image(link, image_data):
     headers = {"User-Agent": ua.random}
 	
     # set the current directory (fix for python 2.7)
-    if sys.version_info[0] > 2:
-	    curdir = ""
-    else:
-        curdir = os.path.dirname(__file__) + os.sep
+    curdir = current_directory()
     
     # ----- BEGIN main download_image try/catch
     try:
