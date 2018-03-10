@@ -69,7 +69,7 @@ def search(url):
         with open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
             f.write(source)
     else:
-        with open('dataset/logs/google/source.html', 'w+', errors='replace') as f:
+        with open('dataset/logs/google/source.html', 'w') as f:
             f.write(source)
 	
     browser.close()
