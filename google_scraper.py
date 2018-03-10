@@ -95,7 +95,13 @@ def download_image(link, image_data):
     # Use a random user agent header for bot id
     ua = UserAgent()
     headers = {"User-Agent": ua.random}
-
+	
+    # set the current directory (fix for python 2.7)
+    if sys.version_info[0] > 2:
+	    curdir = ""
+    else:
+        curdir = os.path.dirname(__file__) + os.sep
+    
     # ----- BEGIN main download_image try/catch
     try:
         # Get the file name and type
@@ -107,17 +113,18 @@ def download_image(link, image_data):
         if type.lower() not in ["jpeg", "jfif", "exif", "tiff", "gif", "bmp", "png", "webp", "jpg"]:
             type = "jpg"
 
+	    # set the working paths depending on the 'unique' argument and the operating system (fix for python 2.7 and linux/windows)
+        if config.unique == True:
+            imagep = (curdir + "dataset" + os.sep + "google" + os.sep + "{}".format(query) + os.sep + "Scrapper_{}.{}".format(str(download_image.delta), type))
+            jsonp = (curdir + "dataset" + os.sep + "/google" + os.sep + "{}".formatr(query) + os.sep + "Scrapper_{}.json".format(str(download_image.delta)))
+        else:
+            imagep = (curdir + "dataset" + os.sep + "google" + os.sep + "Scrapper_{}.{}".format(str(download_image.delta), type))
+            jsonp = (curdir + "dataset" + os.sep + "google" + os.sep + "Scrapper_{}.json".format(str(download_image.delta)))
+
         # Download the image
         print("\n==> Downloading Image #{} from {}".format(
             download_image.delta, link))
         try:
-            # set the working paths depending on the 'unique' argument.
-            if config.unique == True:
-                imagep = ("dataset/google/{}/".format(query) + "Scrapper_{}.{}".format(str(download_image.delta), type))
-                jsonp = ("dataset/google/{}/Scrapper_{}.json".format(query, str(download_image.delta)))
-            else:
-                imagep = ("dataset/google/" + "Scrapper_{}.{}".format(str(download_image.delta), type))
-                jsonp = ("dataset/google/Scrapper_{}.json".format(str(download_image.delta)))
             
 			# open the URL and retrieve the image
             if sys.version_info[0] > 2:
