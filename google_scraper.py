@@ -83,7 +83,7 @@ def search(url):
         with open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
             f.write(source)
     else:
-        with io.open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
+        with io.open('dataset/logs/google/source.html', 'w') as f:
             f.write(source)
 
     browser.close()
@@ -137,7 +137,7 @@ def download_image(link, image_data):
                 with open("dataset/google/{}/".format(query) + "Scrapper_{}.json".format(str(download_image.delta)), "w", encoding='utf-8', errors='replace') as outfile:
                     json.dump(image_data, outfile, indent=4)
             else:
-                with open("dataset/google/{}/".format(query) + "Scrapper_{}.json".format(str(download_image.delta)), "w", encoding='utf-8', errors='replace') as outfile:
+                with io.open("dataset/google/{}/".format(query) + "Scrapper_{}.json".format(str(download_image.delta)), "w") as outfile:
                     json.dump(image_data, outfile, indent=4)
             
             # rename the files if the 'hash' property has been set
