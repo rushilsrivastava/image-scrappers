@@ -81,10 +81,10 @@ def search(url):
     source = browser.page_source
     if sys.version_info[0] > 2:
         with open('dataset/logs/google/source.html', 'w+', encoding='utf-8', errors='replace') as f:
-            f.write(source)
+            f.write(source.encode('utf-8'))
     else:
         with io.open('dataset/logs/google/source.html', 'w', encoding='utf-8') as f:
-            f.write(source)
+            f.write(source.encode('utf-8'))
 
     browser.close()
     print("[%] Closed Chromedriver")
